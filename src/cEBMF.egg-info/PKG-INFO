@@ -1,0 +1,50 @@
+Metadata-Version: 2.4
+Name: cEBMF
+Version: 0.0.1
+Summary: Implementation of the covariate Empirical Bayes Matrix Factorization method
+Author-email: "William R.P. Denault" <wdenault@uchicago.edu>
+Maintainer-email: "William R.P. Denault" <wdenault@uchicago.edu>
+License: MIT
+Project-URL: Homepage, https://github.com/william-denault/cEBMF
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE.md
+Requires-Dist: rpy2>=3.0
+Requires-Dist: numpy
+Requires-Dist: fancyimpute
+Requires-Dist: matplotlib
+Requires-Dist: scikit-learn
+Requires-Dist: scipy
+Requires-Dist: tensorflow
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: twine>=4.0.2; extra == "dev"
+Provides-Extra: r
+Requires-Dist: rpy2>=3.0; extra == "r"
+Dynamic: license-file
+
+## cEBMF
+Package implementing cEBMF method
+
+
+
+
+
+## Optional R functionality (`mixsqp`)
+When a factor has no covariate then the optimization is done via EM or via sequential quadratic optimization.
+
+This optimization can be done extremly efficiently using the work of Kim et al. "fast algorithm for maximum likelihood estimation of mixture proportions using sequential quadratic programming."  the Journal of Computational and Graphical Statistics. 2020. For this option you must install, rpy2>= 3.0, R, the R package `mixsqp`, and the optional Python dependency:
+
+```bash
+pip cEBMF[r]
+```
+If R2py is not installed then the optimization will be done using an EM algorithm that can be slow.
+
+```R
+install.packages("remotes")
+remotes::install_github("stephenslab/mixsqp")
+``` 
