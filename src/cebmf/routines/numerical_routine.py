@@ -2,8 +2,7 @@ import numpy as np
 import math 
 from scipy.stats import norm
 from scipy.stats import truncnorm
-import scipy.stats as stats
-from scipy.optimize import minimize
+import scipy.stats as stats 
 from scipy.special import logsumexp
 
 def do_truncnorm_argchecks(a, b):

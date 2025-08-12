@@ -1,16 +1,16 @@
-import sys
-import os
-import numpy as np
-import math 
+import numpy as np 
 from scipy.stats import norm
 from scipy.stats import truncnorm
-import scipy.stats as stats
+ 
+ 
+from cebmf.routines.numerical_routine import   my_etruncnorm , my_e2truncnorm , log_sum_exp
+from cebmf.routines.distribution_operation import get_data_loglik_normal   
 
 
-# Add the path to utils.py
-sys.path.append(r"c:\Document\Serieux\Travail\python_work\cEBNM_torch\py")
-from distribution_operation import *
-from numerical_routine import *
+ 
+
+
+
 
 class PosteriorMeanExp:
     def __init__(self, post_mean, post_mean2, post_sd):

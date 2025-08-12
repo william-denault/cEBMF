@@ -46,3 +46,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "cebmf" = ["data/**"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+

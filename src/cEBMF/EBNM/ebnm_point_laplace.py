@@ -1,15 +1,10 @@
 import numpy as np
-from scipy.stats import norm
-import sys
-import os
-import matplotlib.pyplot as plt
+from scipy.stats import norm 
 
-# Add the path to utils.py
-sys.path.append(r"D:\Document\Serieux\Travail\python_work\cEBNM_torch\py")
-from numerical_routine import *
-from scipy.stats import norm
-import numpy as np
 
+
+
+from cebmf.routines.numerical_routine import my_etruncnorm , my_e2truncnorm    
 def logg_laplace(x, s, a):
     """
     Compute the log of g, Laplace(a) convolved with a normal distribution.
@@ -152,7 +147,7 @@ def posterior_mean_laplace(x, s, w, a, mu=0):
 
     if np.any(np.isinf(s)):
         inf_indices = np.isinf(s)
-        a = 1/scale[1:]
+        a = 1/a
         # Equivalent of `post$mean[is.infinite(s)]` 
         post_mean[inf_indices] = wpost  / a 
 

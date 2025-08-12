@@ -1,5 +1,5 @@
 Metadata-Version: 2.4
-Name: cEBMF
+Name: cebmf
 Version: 0.0.1
 Summary: Implementation of the covariate Empirical Bayes Matrix Factorization method
 Author-email: "William R.P. Denault" <wdenault@uchicago.edu>
@@ -10,6 +10,7 @@ Classifier: Programming Language :: Python :: 3
 Classifier: Programming Language :: Python :: 3.10
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Science/Research
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 License-File: LICENSE
