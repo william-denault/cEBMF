@@ -24,8 +24,8 @@ res= ash(betahat, sebetahat,   prior="exp")
 def test_ash_loglik_and_scale():
     betahat = np.array([1, 2, 3, 4, 5])
     sebetahat = np.array([1, 0.4, 5, 1, 1])
-    res = ash(betahat, sebetahat,   prior="exp")
-
+    mult=np.sqrt(2)
+    res = ash(betahat, sebetahat,   prior="exp",mult=mult)
     # Example log likelihood, should update to actual value if needed
     expected_log_lik = -15.244064765169643
     np.testing.assert_allclose(res.log_lik, expected_log_lik, atol=1e-6)
@@ -51,29 +51,28 @@ def test_ash_loglik_and_scale():
 def test_autoselect_scales_equals_ash_scale():
     betahat = np.array([1, 2, 3, 4, 5])
     sebetahat = np.array([1, 0.4, 5, 1, 1])
-  
+    mult=np.sqrt(2)  
 
-    scale = autoselect_scales_mix_exp(betahat=betahat, sebetahat=sebetahat )
+    scale = autoselect_scales_mix_exp(betahat=betahat, sebetahat=sebetahat, mult=mult )
     res = ash(betahat, sebetahat, prior="exp")
     np.testing.assert_allclose(res.scale, scale, rtol=1e-3)
 
 def test_optimize_pi_and_posterior_mean_norm_shape():
     betahat = np.array([1, 2, 3, 4, 5])
-    sebetahat = np.array([1, 0.4, 5, 1, 1])
- 
-    scale = autoselect_scales_mix_exp(betahat=betahat, sebetahat=sebetahat )
+    sebetahat = np.array([1, 0.4, 5, 1, 1]) 
+    scale = autoselect_scales_mix_exp(betahat=betahat, sebetahat=sebetahat  )
     L = get_data_loglik_exp(betahat=betahat, sebetahat=sebetahat,   scale=scale)
     exp_L = np.exp(L)
     optimal_pi = optimize_pi(exp_L, penalty=10, verbose=False)
+    log_pi=  np.tile(np.log(optimal_pi+1e-32), (betahat.shape[0],1))
     out = posterior_mean_exp(
         betahat,
         sebetahat,
-        log_pi=np.log(optimal_pi + 1e-32),
+        log_pi=log_pi,
         scale=scale
     )
-    result = exp_L * np.exp(optimal_pi)
-    
-    assert result.shape == (5, 10)
+    result = exp_L * np.exp(optimal_pi) 
+     
 
     # Optional: assert numerical closeness with provided matrix
     expected_result = np.array([[5.14448019e-01, 2.51266858e-01, 2.55860056e-01, 2.62617097e-01,
@@ -96,4 +95,4 @@ def test_optimize_pi_and_posterior_mean_norm_shape():
         3.81619740e-06, 8.66325751e-06, 4.20378818e-05, 3.43749825e-04,
         2.42284899e-03, 1.06997731e-02, 2.90064310e-02, 5.25380779e-02,
         8.94134392e-02, 7.50763563e-02, 6.90667835e-02]])
-    np.testing.assert_allclose(result, expected_result, atol=1e-6)
+    np.testing.assert_allclose(result, expected_result, atol=1e-6) 
