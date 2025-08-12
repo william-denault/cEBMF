@@ -6,11 +6,8 @@ from scipy.sparse.linalg import svds
 from scipy.stats import norm
 
 
-from cEBMF.EBNM.ash import *
-from cEBMF.cEBNM_solver.empirical_mdn import *
-from cEBMF.cEBNM_solver.ebnm_solver.ebnm_point_laplace import *
-from cEBMF.cEBNM_solver.covariates.covariate_moderated_generalized_binary import *
-from cEBMF.cEBNM_solver.covariates.hard_covariate_moderated_generalized_binary import *
+from cebmf.ebnm import *
+from cebmf.cebnm_solver.empirical_mdn import * 
 
 
 class PriorResult:

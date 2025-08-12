@@ -3,7 +3,7 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cEBMF"
+name = "cebmf"  # lowercase matches folder name and PyPI package name
 version = "0.0.1"
 description = "Implementation of the covariate Empirical Bayes Matrix Factorization method"
 readme = "README.md"
@@ -27,7 +27,8 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "License :: OSI Approved :: MIT License",
-  "Operating System :: OS Independent"
+  "Operating System :: OS Independent",
+  "Intended Audience :: Science/Research"
 ]
 
 [project.urls]
@@ -37,10 +38,11 @@ Homepage = "https://github.com/william-denault/cEBMF"
 dev = ["pytest>=7.0", "twine>=4.0.2"]
 r = ["rpy2>=3.0"]
 
-# Tell setuptools to find packages under src/
+[tool.setuptools]
+include-package-data = true  # ensures package_data gets included in wheels
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
-# (Optional) include non-Python files from your package
 [tool.setuptools.package-data]
-"cEBMF" = ["data/**"]
+"cebmf" = ["data/**"]

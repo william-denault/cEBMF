@@ -1,10 +1,4 @@
-# Define dataset class that includes observation noise
  
-import os
-import sys
-
-import matplotlib.pyplot as plt
-sys.path.append(r"D:\Document\Serieux\Travail\python_work\cEBNM_torch\py")
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -12,20 +6,16 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from utils import *
-from numerical_routine import *
-from distribution_operation import *
-from posterior_computation import *
-from ash import *
+ 
 
+ 
 
-import os
-import sys
-sys.path.append(r"D:\Document\Serieux\Travail\python_work\cEBNM_torch\py")
-# Import utils.py directly
-from utils import *
-from numerical_routine import *
-from distribution_operation import *
-from posterior_computation import *
+from cebmf.routines.utils_mix import autoselect_scales_mix_norm
+from cebmf.routines.distribution_operation import get_data_loglik_normal   
+from cebmf.routines.posterior_computation import posterior_mean_norm
+  
+  
+
 
  
 # Define dataset class that includes observation noise

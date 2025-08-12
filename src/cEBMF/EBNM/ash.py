@@ -1,11 +1,19 @@
-import numpy as np
-import sys
-import os
-sys.path.append(r"c:\Document\Serieux\Travail\python_work\cEBNM_torch\py")
-from distribution_operation import *
+import numpy as np 
 from utils import *
-from numerical_routine import *
-from posterior_computation import *
+ 
+from rpy2.rinterface_lib.sexp import NULLType
+
+
+
+from cebmf.routines.numerical_routine import optimize_pi_logL   
+from cebmf.routines.utils_mix import autoselect_scales_mix_norm , autoselect_scales_mix_exp
+from cebmf.routines.distribution_operation import get_data_loglik_normal  , get_data_loglik_exp
+from cebmf.routines.posterior_computation import posterior_mean_norm , posterior_mean_exp
+
+
+
+ 
+
 
 class ash_object:
     def __init__(self, post_mean, post_mean2, post_sd, scale, pi, prior, log_lik=0,#log_lik2 =0,
@@ -64,7 +72,7 @@ def ash ( betahat,sebetahat, prior = "norm", mult=np.sqrt(2),penalty=10,verbose=
     exp_term = np.exp(L - L_max)
     exp_term = np.maximum(exp_term, 1e-300)  # Add a small threshold to prevent extremely small values
     #log_sum_exp = L_max + np.log(np.sum(exp_term, axis=1))
-    log_lik2 = np.sum(log_sum_exp)
+    #log_lik2 = np.sum(log_sum_exp)
 
     
     
@@ -90,7 +98,6 @@ def call_r_ash_fit_all_with_postmean(beta, sigma):
     - mixture standard deviations
     - posterior mean of beta
     """
-    from rpy2.rinterface_lib.sexp import NULLType
 
     sebetahat = np.full_like(beta, sigma)
     ash_obj = ashr.ash(betahat=beta, sebetahat=sebetahat, mixcompdist="normal")

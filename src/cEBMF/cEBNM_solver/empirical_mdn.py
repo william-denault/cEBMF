@@ -5,10 +5,10 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from utils import *
-from numerical_routine import *
-from distribution_operation import *
-from posterior_computation import *
-from ash import *
+  
+from cebmf.routines.posterior_computation import posterior_mean_norm
+  
+  
 
 # Define dataset class that includes observation noise
 class DensityRegressionDataset(Dataset):

@@ -7,9 +7,9 @@ from sklearn.preprocessing import StandardScaler
 from torch_geometric.data import Data
 from torch_geometric.nn import GCNConv
 from torch_geometric.loader import DataLoader as GeoDataLoader
+ 
 
-from posterior_computation import *  # Assume this contains posterior_mean_norm
-
+from cebmf.routines.posterior_computation import posterior_mean_norm
 # Dataset class for graph-based side info
 class GraphDensityRegressionDataset(Dataset):
     def __init__(self, node_features, edge_index, betahat, sebetahat):
