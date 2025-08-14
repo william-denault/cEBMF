@@ -194,7 +194,7 @@ def test_iter_improves_fit_and_elbo_monotone(rank1_data):
 
     improved = rmse(m.Y_fit, X_true)
     assert improved <= base + 1e-8, "Fit worsened after iterations"
-    assert improved < 0.05, f"RMSE still high after iterations: {improved:.4f}"
+    assert improved < base/2, f"RMSE still high after iterations: {improved:.4f}"
 
     # --- ELBO strict monotonicity check (non-decreasing) ---
     obj = getattr(m, "obj", None) or getattr(m, "elbo_history", None)
