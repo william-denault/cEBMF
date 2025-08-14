@@ -8,7 +8,8 @@ from scipy.stats import norm
 
 from cebmf.ebnm import *
 from cebmf.cebnm_solver.empirical_mdn import * 
-
+from cebmf.ebnm.ash import ash
+from cebmf.ebnm.ebnm_point_exp import ebnm_point_exp_solver
 
 class PriorResult:
     """

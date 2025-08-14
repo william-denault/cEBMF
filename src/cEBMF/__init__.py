@@ -1,13 +1,16 @@
-from cebmf.ebnm import ash
-from cebmf.main import cEBMF
+from cebmf.ebnm import ash, ebnm_point_laplace
+from cebmf.main import (
+    cEBMF, cEBMF_object,
+    compute_hat_l_and_s_l, compute_hat_f_and_s_f,   # <- import them
+)
 from cebmf.cebnm_solver.empirical_mdn import EmdnPosteriorMeanNorm
-from cebmf.ebnm import ebnm_point_laplace
-#from cebmf.cebnm_solver import CGB
-#from cebmf.cebnm_solver import HCGB
- 
-__all__ = [ "ash",
-           "EmdnPosteriorMeanNorm",
-           "ebnm_point_laplace",
-           "cEBMF"
 
+__all__ = [
+    "ash",
+    "EmdnPosteriorMeanNorm",
+    "ebnm_point_laplace",
+    "cEBMF",
+    "cEBMF_object",
+    "compute_hat_l_and_s_l",
+    "compute_hat_f_and_s_f",
 ]

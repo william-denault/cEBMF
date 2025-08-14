@@ -43,7 +43,4 @@ src/cebmf/routines/mixsqp_wrapper.py
 src/cebmf/routines/numerical_routine.py
 src/cebmf/routines/posterior_computation.py
 src/cebmf/routines/utils_mix.py
-tests/test_ash.py
 tests/test_cebmf.py
-tests/test_ebnm_point_exp.py
-tests/test_point_laplace.py
