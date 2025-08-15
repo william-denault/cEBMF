@@ -9,6 +9,9 @@ from cebmf.ebnm import *
 from cebmf.ebnm.ash import ash
 from cebmf.ebnm.ebnm_point_exp import ebnm_point_exp_solver
 from cebmf.routines.R_import import choose_pi_optimizer
+from cebmf.ebnm.ebnm_point_exp import ebnm_point_exp_solver
+from cebmf.ebnm.ebnm_point_laplace import ebnm_point_laplace
+
 
 class PriorResult:
     """

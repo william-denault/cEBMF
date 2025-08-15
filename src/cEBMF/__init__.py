@@ -1,6 +1,6 @@
 # cebmf/__init__.py
 
-from .ebnm.ash import ash, ebnm_point_laplace        # lightweight
+from .ebnm.ash import ash         # lightweight
 from .main import (                                  # keep exporting these
     cEBMF, cEBMF_object,
     compute_hat_l_and_s_l, compute_hat_f_and_s_f,
