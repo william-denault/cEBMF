@@ -10,6 +10,7 @@ from cebmf.ebnm import *
 from cebmf.cebnm_solver.empirical_mdn import * 
 from cebmf.ebnm.ash import ash
 from cebmf.ebnm.ebnm_point_exp import ebnm_point_exp_solver
+from cebmf.routines.R_import import choose_pi_optimizer
 
 class PriorResult:
     """
@@ -23,13 +24,23 @@ class PriorResult:
         self.model_param = model_param  # Some priors may not use this
 
 # Define prior functions that return a standardized PriorResult object
-def prior_norm(X, betahat, sebetahat, model_param):
-    ash_obj = ash(betahat=betahat, sebetahat=sebetahat, prior="norm", verbose=False)
-    return PriorResult(post_mean=ash_obj.post_mean, post_mean2=ash_obj.post_mean2, log_lik=ash_obj.log_lik)
+def prior_norm(X, betahat, sebetahat, model_param, **kwargs):
+    ash_obj = ash(betahat=betahat, sebetahat=sebetahat,
+                  prior="norm", verbose=False,
+                  optmode=kwargs.get("optmode"))
+    return PriorResult(post_mean=ash_obj.post_mean,
+                       post_mean2=ash_obj.post_mean2,
+                       log_lik=ash_obj.log_lik)
 
-def prior_exp(X, betahat, sebetahat, model_param):
-    ash_obj = ash(betahat=betahat, sebetahat=sebetahat, prior="norm", verbose=False)
-    return PriorResult(post_mean=ash_obj.post_mean, post_mean2=ash_obj.post_mean2, log_lik=ash_obj.log_lik)
+def prior_exp(X, betahat, sebetahat, model_param, **kwargs):
+    # (you had a bug: it called prior="norm"; fixed to "exp" here)
+    ash_obj = ash(betahat=betahat, sebetahat=sebetahat,
+                  prior="exp", verbose=False,
+                  optmode=kwargs.get("optmode"))
+    return PriorResult(post_mean=ash_obj.post_mean,
+                       post_mean2=ash_obj.post_mean2,
+                       log_lik=ash_obj.log_lik)
+
 
 def prior_point_laplace(X, betahat, sebetahat, model_param):
     ebnm_obj = ash(betahat=betahat, sebetahat=sebetahat,  prior="exp", verbose=False)
@@ -85,9 +96,21 @@ def get_prior_function(prior_dict, key, default):
 
 
 class cEBMF_object:
-    def __init__(self, data, K=5, X_l=None, X_f=None, max_K=100, prior_L="norm", prior_F="norm",
-                 type_noise='constant', maxit=100, param_cebmf_l=None, param_cebmf_f=None, 
-                 fit_constant=True, init_type="udv_si"):
+    def __init__(self,
+                 data,
+                 K=5, 
+                 X_l=None,
+                 X_f=None, 
+                 max_K=100, 
+                 prior_L="norm",
+                 prior_F="norm",
+                 type_noise='constant',
+                 maxit=100,
+                 param_cebmf_l=None,
+                 param_cebmf_f=None, 
+                 fit_constant=True,
+                 init_type="udv_si",
+                 prefer_mixsqp=False):
         self.data = data.astype(np.float32)
         self.K = K
         self.X_l = X_l
@@ -109,6 +132,7 @@ class cEBMF_object:
         # Use custom get_prior_function()
         self.prior_L = get_prior_function(prior_functions, prior_L, prior_L)
         self.prior_F = get_prior_function(prior_functions, prior_F, prior_F)
+        self.optmode=  choose_pi_optimizer(prefer_mixsqp=prefer_mixsqp)
 
     def init_LF(self, use_nmf=False):
         if self.has_nan:
@@ -193,7 +217,11 @@ class cEBMF_object:
         lhat, s_l = compute_hat_l_and_s_l(self.Rk, self.F[:, k], self.F2[:, k], self.tau, self.has_nan)
 
         # Use user-defined or predefined function for L
-        prior_result_L = self.prior_L(self.X_l, lhat, s_l, self.model_list_L[k])
+        prior_result_L = self.prior_L(self.X_l, 
+                                      lhat,
+                                      s_l,
+                                      self.model_list_L[k],
+                                      optmode=self.optmode)
         self.model_list_L[k] = prior_result_L.model_param
         self.L[:, k] = prior_result_L.post_mean
         self.L2[:, k] = prior_result_L.post_mean2
@@ -203,7 +231,11 @@ class cEBMF_object:
         fhat, s_f = compute_hat_f_and_s_f(self.Rk, self.L[:, k], self.L2[:, k], self.tau, self.has_nan)
 
         # Use user-defined or predefined function for F
-        prior_result_F = self.prior_F(self.X_f, fhat, s_f, self.model_list_F[k])
+        prior_result_F = self.prior_F(self.X_f,
+                                      fhat,
+                                      s_f,
+                                      self.model_list_F[k],
+                                      optmode=self.optmode)
         self.model_list_F[k] = prior_result_F.model_param
         self.F[:, k] = prior_result_F.post_mean
         self.F2[:, k] = prior_result_F.post_mean2

@@ -37,6 +37,7 @@ src/cebmf/ebnm/__init__.py
 src/cebmf/ebnm/ash.py
 src/cebmf/ebnm/ebnm_point_exp.py
 src/cebmf/ebnm/ebnm_point_laplace.py
+src/cebmf/routines/R_import.py
 src/cebmf/routines/__init__.py
 src/cebmf/routines/distribution_operation.py
 src/cebmf/routines/mixsqp_wrapper.py

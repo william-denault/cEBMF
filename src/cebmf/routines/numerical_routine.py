@@ -1,9 +1,52 @@
 import numpy as np
-import math 
-from scipy.stats import norm
-from scipy.stats import truncnorm
-import scipy.stats as stats 
+import math
+import scipy.stats as stats
+from scipy.stats import norm, truncnorm
 from scipy.special import logsumexp
+from scipy.optimize import minimize
+
+from cebmf.routines.R_import import (
+    _probe_mixsqp_available,  # raising check
+    _has_mixsqp_silent,       # silent check
+    PiOptim,
+)
+
+
+
+# Lazy, cached loader for rpy2/mixsqp
+_MIXSQP_CTX = None  # cache
+
+def _load_mixsqp_ctx():
+    """
+    Import rpy2 and mixsqp once, cache, and return a context dict.
+    Raises ImportError with instructions if unavailable.
+    """
+    global _MIXSQP_CTX
+    if _MIXSQP_CTX is not None:
+        return _MIXSQP_CTX
+
+    try:
+        from rpy2 import robjects as ro
+        from rpy2.robjects import packages
+        from rpy2.robjects import numpy2ri
+        numpy2ri.activate()  # safe to call once; we cache context anyway
+        mixsqp = packages.importr('mixsqp')
+    except Exception:
+        # Same message as your probe, so users get clear guidance
+        raise ImportError(
+            "Optional dependency `rpy2` is not installed or the R package `mixsqp` is missing.\n"
+            "To use fast optimization via mixsqp for EBNM solvers:\n"
+            "  pip install cEBMF[r]\n"
+            "In R:\n"
+            "  install.packages('mixsqp')\n"
+            "  # or: install.packages('remotes'); remotes::install_github('stephenslab/mixsqp')\n"
+        )
+
+    _MIXSQP_CTX = {"ro": ro, "mixsqp": mixsqp}
+    return _MIXSQP_CTX
+
+
+
 
 def do_truncnorm_argchecks(a, b):
     # Ensure a and b are numpy arrays, even if they are scalars
@@ -259,7 +302,48 @@ def optimize_pi(L, penalty, max_iters=100, tol=1e-6, verbose= True):
 # L is your likelihood matrix (shape n x K)
 # penalty is a scalar penalty parameter, for example: penalty = 0.1
 # pi = em_algorithm(L, penalty)
-def optimize_pi_logL(logL, penalty, max_iters=100, tol=1e-6, verbose=True):
+def optimize_pi_logL(
+    logL,
+    penalty,
+    tol=1e-6,
+    verbose=True,
+    optmode: PiOptim = PiOptim.AUTO
+):
+    """
+    EM algorithm based on the log likelihood for optimizing pi subject to the simplex constraint 
+    that pi lies in the K-dimensional simplex.
+
+    Parameters:
+    logL (numpy.ndarray): The log-likelihood matrix with shape (n, K) where logL[j, k] corresponds to log(l_kj).
+    penalty (float): The penalty parameter.
+    max_iters (int): The maximum number of iterations for optimization.
+    tol (float): The tolerance for convergence.
+    prefer_mixsqp : bool
+        Try to use mixsqp if available.
+    mixsqp_kwargs : dict
+        Extra args to optimize_pi_mixsqp (e.g., anchor_penalty=100.0, anchor_weight=10.0,
+        p1_init=0.9, eps=1e-6, numiter_em=20).
+    
+    Returns:
+    numpy.ndarray: The optimized pi values as a 1D numpy array.
+    """
+    if logL.ndim != 2:
+        raise ValueError("logL must be a 2D array (n x K).")
+
+    # AUTO -> use mixsqp if present (silent), else EM
+    chosen = PiOptim.MIXSQP if (optmode is PiOptim.AUTO and _has_mixsqp_silent()) else optmode
+
+    if chosen is PiOptim.MIXSQP:
+        _probe_mixsqp_available()  # raises with install instructions if missing
+        return optimize_pi_logL_mixsqp(logL=logL, penalty=penalty)
+    else:
+        return optimize_pi_logL_EM(logL=logL, penalty=penalty, tol=tol, verbose=verbose)
+
+ 
+
+
+
+def optimize_pi_logL_EM(logL, penalty, max_iters=100, tol=1e-6, verbose=True):
     """
     EM algorithm based on the log likelihood for optimizing pi subject to the simplex constraint 
     that pi lies in the K-dimensional simplex.
@@ -301,3 +385,53 @@ def optimize_pi_logL(logL, penalty, max_iters=100, tol=1e-6, verbose=True):
         pi = pi_new
 
     return pi
+
+
+def optimize_pi_logL_mixsqp(
+    logL: np.ndarray,
+    p1: float = 0.9,
+    anchor_penalty: float = 100.0,
+    penalty: float = 10.0,
+    em_iters: int = 20,
+    eps: float = 1e-6,
+    verbose: bool = False
+) -> np.ndarray:
+    """
+    Fit mixture weights with R's mixsqp from a log-likelihood matrix.
+    Uses lazy, cached rpy2/mixsqp imports via _load_mixsqp_ctx().
+    """
+    if logL.ndim != 2:
+        raise ValueError("logL must be a 2D array of shape (n, K).")
+    n, K = logL.shape
+
+    # ---- lazy R context (single import per process) ----
+    ctx = _load_mixsqp_ctx()
+    ro = ctx["ro"]
+    mixsqp = ctx["mixsqp"]
+    # ----------------------------------------------------
+
+    # init like your R snippet
+    p_init = np.zeros(K)
+    p_init[0] = p1
+    if K > 1:
+        p_init[1:] = (1.0 - p1) / (K - 1)
+
+    # anchor row (log=TRUE): [0, -anchor_penalty, ...]
+    anchor_row = np.concatenate(([0.0], -anchor_penalty * np.ones(K - 1)))
+    L_aug = np.vstack([anchor_row, logL])
+
+    # weights: first row gets 'penalty' (pseudo-count), rest 1
+    w = np.concatenate(([penalty], np.ones(n)))
+
+    # control with 'numiter.em'
+    control = ro.r['list'](verbose=verbose, eps=eps)
+    control = ro.r('function(ctrl, v){ctrl[["numiter.em"]] <- v; ctrl}')(control, em_iters)
+
+    # to R
+    L_R = ro.r.matrix(L_aug, nrow=L_aug.shape[0], ncol=L_aug.shape[1])
+    w_R = ro.FloatVector(w.tolist())
+    p0_R = ro.FloatVector(p_init.tolist())
+
+    # call mixsqp
+    out = mixsqp.mixsqp(L=L_R, w=w_R, x0=p0_R, log=True, control=control)
+    return np.array(out.rx2('x'), dtype=float)
