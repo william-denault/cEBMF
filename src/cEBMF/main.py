@@ -1,13 +1,11 @@
 import numpy as np
-from fancyimpute import IterativeSVD
-import matplotlib.pyplot as plt
+from fancyimpute import IterativeSVD 
 from sklearn.decomposition import NMF
 from scipy.sparse.linalg import svds
 from scipy.stats import norm
 
 
-from cebmf.ebnm import *
-from cebmf.cebnm_solver.empirical_mdn import * 
+from cebmf.ebnm import * 
 from cebmf.ebnm.ash import ash
 from cebmf.ebnm.ebnm_point_exp import ebnm_point_exp_solver
 from cebmf.routines.R_import import choose_pi_optimizer
@@ -51,14 +49,17 @@ def prior_point_exp(X, betahat, sebetahat, model_param):
     return PriorResult(post_mean=ebnm_obj.post_mean, post_mean2=ebnm_obj.post_mean2, log_lik=ebnm_obj.log_lik)
 
 def prior_emdn(X, betahat, sebetahat, model_param):
+    from cebmf.cebnm_solver.empirical_mdn import emdn_posterior_means
     emdn = emdn_posterior_means(X=X, betahat=betahat, sebetahat=sebetahat, model_param=model_param)
     return PriorResult(post_mean=emdn.post_mean, post_mean2=emdn.post_mean2, log_lik=-emdn.loss, model_param=emdn.model_param)
 
 def prior_cgb(X, betahat, sebetahat, model_param):
+    from cebmf.cebnm_solver.empirical_mdn import cgb_posterior_means
     cgb = cgb_posterior_means(X=X, betahat=betahat, sebetahat=sebetahat, model_param=model_param)
     return PriorResult(post_mean=cgb.post_mean, post_mean2=cgb.post_mean2, log_lik=-cgb.loss, model_param=cgb.model_param)
 
 def prior_hard_cgb(X, betahat, sebetahat, model_param):
+    from cebmf.cebnm_solver.empirical_mdn import cgb_hard_posterior_means
     cgb = cgb_hard_posterior_means(X=X, betahat=betahat, sebetahat=sebetahat, model_param=model_param)
     return PriorResult(post_mean=cgb.post_mean, post_mean2=cgb.post_mean2, log_lik=-cgb.loss, model_param=cgb.model_param)
 
@@ -136,7 +137,14 @@ class cEBMF_object:
 
     def init_LF(self, use_nmf=False):
         if self.has_nan:
-            print("Initializing using Iterative SVD due to missing values.")
+        # import here to keep package import light
+            try:
+                from fancyimpute import IterativeSVD
+            except Exception as e:
+                raise ImportError(
+                "Missing optional dependency 'fancyimpute' required for "
+                "NaN-imputation. Install via `pip install fancyimpute`."
+                ) from e
             imputed_data = IterativeSVD().fit_transform(self.data)
         else:
             imputed_data = self.data
@@ -144,14 +152,17 @@ class cEBMF_object:
         K = min(self.K, imputed_data.shape[1])
 
         if use_nmf:
+            # import here to avoid heavy sklearn import at package import
+            from sklearn.decomposition import NMF
+            imputed_data = imputed_data.copy()
             imputed_data[imputed_data < 0] = 1e-6
             nmf_model = NMF(n_components=K, init='random', random_state=42, max_iter=500)
             self.L = nmf_model.fit_transform(imputed_data).astype(np.float32)
             self.F = nmf_model.components_.T.astype(np.float32)
         else:
             U, s, Vt = svds(imputed_data, k=K)
-            sorted_indices = np.argsort(s)[::-1]
-            U, s, Vt = U[:, sorted_indices], s[sorted_indices], Vt[sorted_indices, :]
+            idx = np.argsort(s)[::-1]
+            U, s, Vt = U[:, idx], s[idx], Vt[idx, :]
             self.L = (U[:, :K] @ np.diag(s[:K])).astype(np.float32)
             self.F = Vt[:K, :].T.astype(np.float32)
 

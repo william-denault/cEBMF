@@ -4,9 +4,7 @@ from cebmf.routines.utils_mix import autoselect_scales_mix_norm, autoselect_scal
 from cebmf.routines.distribution_operation import get_data_loglik_normal, get_data_loglik_exp
 from cebmf.routines.posterior_computation import posterior_mean_norm, posterior_mean_exp
 from cebmf.routines.R_import import PiOptim, choose_pi_optimizer
-from rpy2.rinterface_lib.sexp import NULLType  # safe to import; does not require an R session
-
-
+ 
 class ash_object:
     def __init__(
         self,
@@ -121,19 +119,40 @@ def ash(
     )
 
 
-# REMOVE this from top-level:
-# from rpy2.rinterface_lib.sexp import NULLType
-
 def call_r_ash_fit_all_with_postmean(beta, sigma):
+    """
+    Call R's ashr::ash and return:
+      - log mixture weights (numpy 1D)
+      - mixture standard deviations (numpy 1D)
+      - posterior mean of beta (numpy 1D)
+
+    Lazy-loads rpy2/ashr so importing this module does not require R.
+    """
     try:
         from rpy2 import robjects as ro
         from rpy2.robjects import numpy2ri, packages
-        from rpy2.rinterface_lib.sexp import NULLType   # <-- move here
+        from rpy2.rinterface_lib.sexp import NULLType  # <-- moved here
         numpy2ri.activate()
         ashr = packages.importr("ashr")
-    except Exception:
+    except Exception as e:
         raise ImportError(
             "Optional dependency `rpy2` and/or R package `ashr` are not installed.\n"
             "Install rpy2 and ashr to use this function."
         )
-    ...
+
+    beta = np.asarray(beta)
+    sebetahat = np.full_like(beta, sigma)
+
+    ash_obj = ashr.ash(betahat=beta, sebetahat=sebetahat, mixcompdist="normal")
+
+    fitted_g = ash_obj.rx2("fitted_g")
+    pi_r = np.array(fitted_g.rx2("pi"), dtype=np.float64)
+    scale_r = np.array(fitted_g.rx2("sd"), dtype=np.float64)
+
+    posterior_mean_r = ash_obj.rx2("result").rx2("PosteriorMean")
+    if isinstance(posterior_mean_r, NULLType):
+        raise RuntimeError("R ashr::ash returned NULL for result$PosteriorMean")
+    posterior_mean = np.array(posterior_mean_r, dtype=np.float64)
+
+    log_pi = np.log(np.clip(pi_r, 1e-300, 1.0))
+    return log_pi, scale_r, posterior_mean
