@@ -16,6 +16,7 @@ class ash_object:
         prior,
         log_lik=0.0,
         mode=0.0,
+        prefer_mixsqp: bool = True
     ):
         self.post_mean = post_mean
         self.post_mean2 = post_mean2
@@ -25,6 +26,7 @@ class ash_object:
         self.prior = prior
         self.log_lik = log_lik
         self.mode = mode
+        self.prefer_mixsqp=prefer_mixsqp
 
 
 def ash(
@@ -37,8 +39,8 @@ def ash(
     threshold_loglikelihood=-300.0,
     mode=0.0,
     *,
-    optmode: PiOptim = PiOptim.AUTO,
-    prefer_mixsqp: bool = True,
+    optmode: PiOptim = PiOptim.EM,
+    prefer_mixsqp: bool = False,
 ):
     """
     Adaptive shrinkage with mixture priors (normal or exponential) using either EM or mixsqp
