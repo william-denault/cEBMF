@@ -6,11 +6,8 @@ from scipy.stats import truncnorm
 from cebmf.routines.numerical_routine import   my_etruncnorm , my_e2truncnorm , log_sum_exp
 from cebmf.routines.distribution_operation import get_data_loglik_normal   
 
-
  
-
-
-
+ 
 
 class PosteriorMeanExp:
     def __init__(self, post_mean, post_mean2, post_sd):

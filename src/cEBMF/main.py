@@ -44,7 +44,7 @@ def prior_exp(X, betahat, sebetahat, model_param, **kwargs):
 
 
 def prior_point_laplace(X, betahat, sebetahat, model_param):
-    ebnm_obj = ash(betahat=betahat, sebetahat=sebetahat,  prior="exp", verbose=False)
+    ebnm_obj = ebnm_point_laplace(betahat=betahat, sebetahat=sebetahat,  prior="exp", verbose=False)
     return PriorResult(post_mean=ebnm_obj.post_mean, post_mean2=ebnm_obj.post_mean2, log_lik=ebnm_obj.log_lik)
 
 def prior_point_exp(X, betahat, sebetahat, model_param):
