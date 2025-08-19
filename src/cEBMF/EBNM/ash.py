@@ -39,8 +39,8 @@ def ash(
     threshold_loglikelihood=-300.0,
     mode=0.0,
     *,
-    optmode: PiOptim = PiOptim.EM,
-    prefer_mixsqp: bool = False,
+    optmode: PiOptim = PiOptim.AUTO,
+    prefer_mixsqp: bool = True,
 ):
     """
     Adaptive shrinkage with mixture priors (normal or exponential) using either EM or mixsqp
@@ -93,7 +93,7 @@ def ash(
         optimal_pi = optimize_pi_logL(
             logL=L, penalty=penalty, verbose=verbose, optmode=mode_pi
         )
-        log_pi = np.tile(np.log(optimal_pi + 1e-32), (betahat.shape[0], 1))
+        log_pi =  np.log(optimal_pi + 1e-32) 
         out = posterior_mean_exp(
             betahat, sebetahat, log_pi=log_pi, scale=scale
         )
